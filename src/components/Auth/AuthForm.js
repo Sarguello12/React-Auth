@@ -9,6 +9,8 @@ const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
+  const AUTH_KEY = process.env.REACT_APP_FIREBASE_KEY;
+
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
   };
@@ -16,39 +18,46 @@ const AuthForm = () => {
   const submitHandler = (event) => {
     event.preventDefault();
     setIsLoading(true);
+    let url;
 
     const enteredEmail = emailInputRef.current.value;
     const enteredPassword = passwordInputRef.current.value;
 
     if (isLogin) {
-      //...
+      url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='
     } else {
-      fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBZLfTNe1Dfn9zP7XX4yjrDtog_fHHsDzk', 
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          email: enteredEmail,
-          password: enteredPassword,
-          returnSecureToken: true
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }).then(res => {
-        setIsLoading(false)
-        if (res.ok) {
-          //...
-        } else {
-          return res.json().then(data => {
-            let errorMessage = 'Authentication failed!';
-            if (data && data.error && data.error.message) {
-              errorMessage = data.error.message
-            }
-            alert(errorMessage);
-          });
-        }
-      });
+      url = 'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='
     }
+
+    fetch(url + AUTH_KEY, {
+      method: 'POST',
+      body: JSON.stringify({
+        email: enteredEmail,
+        password: enteredPassword,
+        returnSecureToken: true
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      setIsLoading(false)
+      if (res.ok) {
+        return res.json();
+      } else {
+        return res.json().then(data => {
+          let errorMessage = 'Authentication failed!';
+          // if (data && data.error && data.error.message) {
+          //   errorMessage = data.error.message
+          // }
+          throw new Error(errorMessage)
+        });
+      }
+    }).then(data => {
+      //...
+      console.log(data);
+    }).catch(err => {
+      alert(err.message);
+    });
   }
 
   return (
@@ -80,3 +89,4 @@ const AuthForm = () => {
 };
 
 export default AuthForm;
+
